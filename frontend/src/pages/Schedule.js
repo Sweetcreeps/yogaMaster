@@ -19,9 +19,9 @@ const descriptions = {
   'Hatha Yoga':
     'A foundational style focusing on alignment, posture, and mindful breathing.',
   'Yin Yoga':
-    'A slow‑paced practice holding passive poses to stretch deep connective tissues.',
+    'A slow-paced practice holding passive poses to stretch deep connective tissues.',
   'Power Yoga':
-    'A vigorous, fitness‑based approach building strength, flexibility, and stamina.',
+    'A vigorous, fitness-based approach building strength, flexibility, and stamina.',
   Ashtanga:
     'A disciplined sequence of postures performed in a set order to build heat and focus.',
   Restorative:
@@ -32,13 +32,10 @@ const descriptions = {
     'A balanced class blending dynamic flow segments with restorative holds for equilibrium.',
 };
 
-// Build next 14 days
 const days = Array.from({ length: 14 }, (_, i) => addDays(startOfToday(), i));
 
-// Human‑friendly day label
 const dayLabel = (iso) => {
-  const dt = new Date(iso);
-  const today = startOfToday();
+  const dt = new Date(iso), today = startOfToday();
   if (dt.toDateString() === today.toDateString()) return 'Today';
   if (dt.toDateString() === addDays(today, 1).toDateString()) return 'Tomorrow';
   return format(dt, 'EEEE, MMMM do');
@@ -46,24 +43,28 @@ const dayLabel = (iso) => {
 
 const Schedule = () => {
   const [schedule, setSchedule] = useState({});
+  const [enrolledIds, setEnrolledIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [selectedClass, setSelectedClass] = useState(null);
 
   useEffect(() => {
-    api.get('classes/')
-      .then((res) => {
+    Promise.all([api.get('classes/'), api.get('bookings/')])
+      .then(([clsRes, bookRes]) => {
+        // group classes by date
         const grouped = {};
-        res.data.forEach((cls) => {
-          const date = cls.date;
-          if (!grouped[date]) grouped[date] = [];
-          grouped[date].push(cls);
+        clsRes.data.forEach((cls) => {
+          grouped[cls.date] = grouped[cls.date] || [];
+          grouped[cls.date].push(cls);
         });
         setSchedule(grouped);
+        // collect the IDs of classes the user is already enrolled in
+        const ids = bookRes.data.map((b) => b.yoga_class.id);
+        setEnrolledIds(ids);
       })
       .catch((err) => {
-        console.error('Schedule fetch error:', err);
+        console.error('Fetch error:', err);
         const msg = err.response
           ? `Error ${err.response.status}: ${err.response.statusText}`
           : err.message;
@@ -78,24 +79,21 @@ const Schedule = () => {
   };
 
   const handleEnroll = () => {
-    api.post('bookings/', { yoga_class: selectedClass.id })
+    api.post('bookings/', { yoga_class_id: selectedClass.id })
       .then(() => {
-        alert(`You have been enrolled in "${selectedClass.title}"!`);
+        alert(`You’re now enrolled in “${selectedClass.title}”!`);
+        setEnrolledIds((prev) => [...prev, selectedClass.id]);
         setShowModal(false);
       })
-      .catch(() => {
-        alert('Error enrolling—please try again.');
+      .catch((err) => {
+        console.error('Enrollment error details:', err.response?.data);
+        alert(`Enroll failed: ${JSON.stringify(err.response?.data)}`);
       });
   };
 
   if (loading) {
-    return (
-      <div className="text-center my-5">
-        <Spinner animation="border" />
-      </div>
-    );
+    return <div className="text-center my-5"><Spinner animation="border" /></div>;
   }
-
   if (error) {
     return (
       <Container className="my-5">
@@ -115,7 +113,7 @@ const Schedule = () => {
         style={{ marginTop: '80px', borderBottom: '1px solid #ddd' }}
       >
         <p className="mb-0" style={{ fontSize: '0.9rem', fontWeight: 500 }}>
-          Yoga Master • 123 Serenity Lane, Zen City • Open Daily 6 am–9 pm
+          Yoga Master • 123 Serenity Lane, Zen City • Open Daily 6 am–9 pm
         </p>
       </Container>
 
@@ -140,24 +138,30 @@ const Schedule = () => {
                 <tr style={{ backgroundColor: '#495057', color: '#fff' }}>
                   <th>Class</th>
                   <th>Time (Duration)</th>
-                  <th>Instructor</th>
+                  <th>Spaces Left</th>
                 </tr>
               </thead>
               <tbody>
                 {classes.length > 0 ? (
-                  classes.map((cls) => (
-                    <tr
-                      key={cls.id}
-                      onClick={() => handleRowClick(cls)}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <td>{cls.title.toUpperCase()}</td>
-                      <td style={{ color: '#343a40', fontWeight: 500 }}>
-                        {cls.start_time} ({cls.duration} mins)
-                      </td>
-                      <td>{cls.instructor}</td>
-                    </tr>
-                  ))
+                  classes.map((cls) => {
+                    const isEnrolled = enrolledIds.includes(cls.id);
+                    return (
+                      <tr
+                        key={cls.id}
+                        onClick={() => handleRowClick(cls)}
+                        style={{
+                          cursor: 'pointer',
+                          backgroundColor: isEnrolled ? '#e6ffe6' : undefined,
+                        }}
+                      >
+                        <td>{cls.title.toUpperCase()}</td>
+                        <td style={{ color: '#343a40', fontWeight: 500 }}>
+                          {cls.start_time} ({cls.duration} mins)
+                        </td>
+                        <td>{cls.spots_remaining}</td>
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr>
                     <td colSpan={3} className="text-center text-muted">
@@ -189,7 +193,7 @@ const Schedule = () => {
                 <strong>Time:</strong> {selectedClass.start_time} ({selectedClass.duration} mins)
               </p>
               <p>
-                <strong>Instructor:</strong> {selectedClass.instructor}
+                <strong>Instructor:</strong> {selectedClass.instructor_name}
               </p>
               <hr />
               <p style={{ fontStyle: 'italic' }}>
@@ -202,8 +206,12 @@ const Schedule = () => {
           <Button variant="secondary" onClick={() => setShowModal(false)}>
             Cancel
           </Button>
-          <Button variant="success" onClick={handleEnroll}>
-            Enroll
+          <Button
+            variant="success"
+            onClick={handleEnroll}
+            disabled={enrolledIds.includes(selectedClass?.id)}
+          >
+            {enrolledIds.includes(selectedClass?.id) ? 'Already Enrolled' : 'Enroll'}
           </Button>
         </Modal.Footer>
       </Modal>

@@ -8,10 +8,11 @@ from rest_framework.response import Response
 from .models import User
 from .serializers import UserSerializer
 
+
 class UserViewSet(viewsets.ModelViewSet):
     """
     - Anyone can create a new user (sign up).
-    - Only staff users (is_staff=True) can list, retrieve, update, or delete.
+    - Only staff users (is_staff=True) can list, retrieve, update, or delete users.
     """
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -24,9 +25,10 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class InstructorViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    Publicly list only users who are instructors (role='teacher').
+    Publicly list only users who have is_staff=True
+    (i.e. your instructors/admins).
     """
-    queryset = User.objects.filter(role='teacher')
+    queryset = User.objects.filter(is_staff=True)
     serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny]
 

@@ -25,7 +25,7 @@ const Login = () => {
   const [form, setForm] = useState({
     username: '',
     password: '',
-    remember: false,   // <-- added
+    remember: false,
   });
   const [errors, setErrors] = useState('');
 
@@ -45,7 +45,7 @@ const Login = () => {
         username: form.username,
         password: form.password,
         role: isAdmin ? 'admin' : 'user',
-        remember: form.remember,  // you can handle this in your AuthContext
+        remember: form.remember,
       });
       navigate(isAdmin ? '/admin' : '/dashboard', { replace: true });
     } catch {
@@ -131,6 +131,12 @@ const Login = () => {
                         />
                         Sign in with Google
                       </Button>
+                      <div className="text-center mt-3">
+                        <span className="text-muted">Don’t have an account? </span>
+                        <Link to="/signup" className="text-primary">
+                          Sign up
+                        </Link>
+                      </div>
                     </Form>
                   </Tab>
                   <Tab eventKey="admin" title="Admin">
@@ -158,12 +164,6 @@ const Login = () => {
                     </Form>
                   </Tab>
                 </Tabs>
-                <div className="text-center mt-3">
-                  <span className="text-muted">Don’t have an account? </span>
-                  <Link to="/signup" className="text-primary">
-                    Sign up
-                  </Link>
-                </div>
               </Card.Body>
             </Card>
           </Col>

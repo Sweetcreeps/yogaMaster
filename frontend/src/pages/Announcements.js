@@ -1,123 +1,132 @@
 // src/pages/Announcements.js
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Card,
-  Form,
+  ListGroup,
   Button,
+  Modal,
+  Form,
+  Spinner,
   Alert,
-  Row,
-  Col,
 } from 'react-bootstrap';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
 import CustomBreadcrumb from '../components/CustomBreadcrumb';
+import { useAuth } from '../context/AuthContext';
+import api from '../api/axiosConfig';
 
-// initial mock announcements
-const initialAnnouncements = [
-  {
-    id: 1,
-    title: 'Studio Reopens May 1st!',
-    date: '2025-05-01',
-    content:
-      "After our spring break, we're thrilled to welcome you back on May 1st with a refreshed space and new class times.",
-  },
-  {
-    id: 2,
-    title: 'New Evening Flow Class',
-    date: '2025-04-25',
-    content:
-      'Join our brand‑new “Flow & Restore” class every Thursday at 7pm—perfect for decompressing after a busy day.',
-  },
-];
+export default function Announcements() {
+  const { user } = useAuth();
+  const [announcements, setAnnouncements] = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState('');
+  
+  // “New Announcement” modal state
+  const [showModal, setShowModal]   = useState(false);
+  const [formData, setFormData]     = useState({ title: '', content: '' });
+  const [saving, setSaving]         = useState(false);
 
-const Announcements = () => {
-  const [announcements] = useState(initialAnnouncements);
-  const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
-  const [subscribed, setSubscribed] = useState(false);
+  useEffect(() => {
+    api.get('announcements/')
+      .then(res => setAnnouncements(res.data))
+      .catch(() => setError('Failed to load announcements.'))
+      .finally(() => setLoading(false));
+  }, []);
 
-  const handleSubscribe = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      setError('Please enter a valid email address');
-      return;
+    setSaving(true);
+    try {
+      const res = await api.post('announcements/', formData);
+      setAnnouncements([res.data, ...announcements]);
+      setShowModal(false);
+      setFormData({ title: '', content: '' });
+    } catch (err) {
+      console.error('Announcement save error:', err.response?.data);
+      alert(`Save failed: ${JSON.stringify(err.response?.data)}`);
+    } finally {
+      setSaving(false);
     }
-    setError('');
-    setSubscribed(true);
-    setEmail('');
-    // TODO: send email to backend/store
   };
+
+  if (loading) {
+    return <div className="text-center my-5"><Spinner animation="border" /></div>;
+  }
 
   return (
     <>
-      
       <CustomBreadcrumb activeLabel="Announcements" />
 
-      <Container style={{ marginTop: '1rem', marginBottom: '3rem' }}>
-        <h1 className="mb-4">Announcements</h1>
+      <Container style={{ marginTop: '80px', marginBottom: '2rem' }}>
+        {error && <Alert variant="danger">{error}</Alert>}
 
-        {announcements.map((a) => (
-          <Card key={a.id} className="mb-4 shadow-sm">
-            <Card.Header as="h5">
-              {a.title}{' '}
-              <small className="text-muted" style={{ fontSize: '0.8rem' }}>
-                ({a.date})
-              </small>
-            </Card.Header>
-            <Card.Body>
-              <Card.Text>{a.content}</Card.Text>
-            </Card.Body>
-          </Card>
-        ))}
+        {user?.is_staff && (
+          <div className="mb-4 text-end">
+            <Button onClick={() => setShowModal(true)}>New Announcement</Button>
+          </div>
+        )}
 
-        {/* Newsletter Subscribe Form */}
-        <Card className="mt-5 shadow-sm border-0">
-          <Card.Body className="p-4">
-            <h4 className="mb-3">Subscribe to Our Newsletter</h4>
-            {subscribed && (
-              <Alert variant="success">
-                Thanks for subscribing! You’ll hear from us soon.
-              </Alert>
-            )}
-            <Form noValidate onSubmit={handleSubscribe}>
-              <Row className="align-items-center">
-                <Col xs={12} md={8}>
-                  <Form.Group controlId="newsletterEmail" className="mb-2">
-                    <Form.Label className="visually-hidden">
-                      Your Email
-                    </Form.Label>
-                    <Form.Control
-                      type="email"
-                      placeholder="Enter your email"
-                      value={email}
-                      isInvalid={!!error}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                    <Form.Control.Feedback type="invalid">
-                      {error}
-                    </Form.Control.Feedback>
-                  </Form.Group>
-                </Col>
-                <Col xs={12} md={4}>
-                  <Button
-                    variant="primary"
-                    type="submit"
-                    className="w-100 mb-2"
-                  >
-                    Subscribe
-                  </Button>
-                </Col>
-              </Row>
-            </Form>
-          </Card.Body>
-        </Card>
+        {announcements.length === 0 ? (
+          <Alert variant="info">No announcements yet.</Alert>
+        ) : (
+          <ListGroup>
+            {announcements.map((a) => (
+              <ListGroup.Item key={a.id} className="mb-3">
+                <Card>
+                  <Card.Header>
+                    <strong>{a.title}</strong>
+                    <span className="text-muted float-end">
+                      {new Date(a.date).toLocaleString()} by {a.author_name}
+                    </span>
+                  </Card.Header>
+                  <Card.Body>{a.content}</Card.Body>
+                </Card>
+              </ListGroup.Item>
+            ))}
+          </ListGroup>
+        )}
       </Container>
 
-      
+      {/* New Announcement Modal */}
+      <Modal show={showModal} onHide={() => setShowModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>New Announcement</Modal.Title>
+        </Modal.Header>
+        <Form onSubmit={handleSave}>
+          <Modal.Body>
+            <Form.Group className="mb-3">
+              <Form.Label>Title</Form.Label>
+              <Form.Control
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                required
+              />
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>Content</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={4}
+                value={formData.content}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                required
+              />
+            </Form.Group>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button
+              variant="secondary"
+              onClick={() => setShowModal(false)}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit" disabled={saving}>
+              {saving ? 'Publishing…' : 'Publish'}
+            </Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
     </>
   );
-};
-
-export default Announcements;
+}

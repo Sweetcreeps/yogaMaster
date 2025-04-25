@@ -1,26 +1,29 @@
 import React from 'react';
 import { Container, Row, Col, Card} from 'react-bootstrap';
+import alice from '../images/alice.jpg';
+import bob from '../images/bob.jpg';
+import clara from '../images/clara.jpg';
 
 const instructors = [
   {
     id: 1,
     name: 'Alice Adams',
     specialty: 'Vinyasa Flow',
-    photo: '/images/alice.jpg',
+    photo: (alice),
     bio: 'Alice brings over 10 years of teaching experience, blending dynamic movement with mindfulness to create an uplifting practice.',
   },
   {
     id: 2,
     name: 'Bob Brown',
     specialty: 'Hatha Yoga',
-    photo: '/images/bob.jpg',
+    photo: (bob),
     bio: 'Bob’s classes focus on alignment and breath, offering a strong foundation for students of all levels.',
   },
   {
     id: 3,
     name: 'Clara Chen',
     specialty: 'Yin Yoga',
-    photo: '/images/clara.jpg',
+    photo: (clara),
     bio: 'Clara specializes in deep‑stretch and relaxation techniques, perfect for unwinding and restoring balance.',
   },
 ];
