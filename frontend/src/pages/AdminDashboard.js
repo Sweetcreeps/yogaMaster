@@ -1,6 +1,4 @@
-// src/pages/AdminDashboard.js
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; // React and hooks for state & lifecycle
 import {
   Container,
   Table,
@@ -9,11 +7,12 @@ import {
   Form,
   Spinner,
   Alert,
-} from 'react-bootstrap';
-import { format, startOfToday, addDays } from 'date-fns';
-import CustomBreadcrumb from '../components/CustomBreadcrumb';
-import api from '../api/axiosConfig';
+} from 'react-bootstrap'; // Bootstrap components for layout & UI
+import { format, startOfToday, addDays } from 'date-fns'; // date-fns for formatting & date math
+import CustomBreadcrumb from '../components/CustomBreadcrumb'; // breadcrumb nav component
+import api from '../api/axiosConfig'; // axios wrapper for API calls
 
+// Available class types for the form dropdown
 const classTypes = [
   'Vinyasa Flow',
   'Hatha Yoga',
@@ -25,10 +24,10 @@ const classTypes = [
   'Flow & Restore',
 ];
 
-// Build next 14 days
+// Build an array of the next 14 days starting today
 const days = Array.from({ length: 14 }, (_, i) => addDays(startOfToday(), i));
 
-// Human-friendly label
+// Convert ISO date to a friendly label (Today, Tomorrow, or weekday)
 const dayLabel = (iso) => {
   const dt = new Date(iso),
         today = startOfToday();
@@ -38,23 +37,27 @@ const dayLabel = (iso) => {
 };
 
 const AdminDashboard = () => {
+  // state for classes & instructors data
   const [classes, setClasses] = useState([]);
   const [instructors, setInstructors] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true); // spinner while fetching
+  const [error, setError] = useState('');       // top-level errors
 
+  // form modal state
   const [showForm, setShowForm] = useState(false);
-  const [formMode, setFormMode] = useState('create');
-  const [current, setCurrent] = useState({});
-  const [showEnroll, setShowEnroll] = useState(false);
-  const [enrolledList, setEnrolledList] = useState([]);
-  const [enrollError, setEnrollError] = useState('');
+  const [formMode, setFormMode] = useState('create'); // 'create' or 'edit'
+  const [current, setCurrent] = useState({});         // currently editing class
 
-  // Fetch classes and instructors on mount
+  // enrollment modal state
+  const [showEnroll, setShowEnroll] = useState(false);
+  const [enrolledList, setEnrolledList] = useState([]); // names of enrolled users
+  const [enrollError, setEnrollError] = useState('');   // errors loading enrollments
+
+  // Fetch classes & instructors on first render
   useEffect(() => {
     Promise.all([
       api.get('classes/'),
-      api.get('instructors/'),  // ← fetch only instructors
+      api.get('instructors/'),
     ])
       .then(([clsRes, instRes]) => {
         setClasses(clsRes.data);
@@ -64,11 +67,13 @@ const AdminDashboard = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  // Open form in create or edit mode
   const openForm = (mode, cls = {}) => {
     setFormMode(mode);
     setCurrent(
       mode === 'create'
         ? {
+            // default values for a new class
             title: '',
             date: format(startOfToday(), 'yyyy-MM-dd'),
             start_time: '06:00',
@@ -76,11 +81,12 @@ const AdminDashboard = () => {
             capacity: 20,
             instructor: instructors[0]?.id || '',
           }
-        : { ...cls }
+        : { ...cls } // populate with existing class data
     );
     setShowForm(true);
   };
 
+  // Save new or edited class
   const handleSave = (e) => {
     e.preventDefault();
     const payload = {
@@ -101,14 +107,15 @@ const AdminDashboard = () => {
       .then((res) => {
         setClasses((prev) =>
           formMode === 'create'
-            ? [...prev, res.data]
-            : prev.map((c) => (c.id === res.data.id ? res.data : c))
+            ? [...prev, res.data] // add new
+            : prev.map((c) => (c.id === res.data.id ? res.data : c)) // update existing
         );
       })
       .catch(() => setError(`Failed to ${formMode} class.`))
       .finally(() => setShowForm(false));
   };
 
+  // Delete a class after confirmation
   const handleDelete = (id) => {
     if (!window.confirm('Delete this class?')) return;
     api
@@ -117,6 +124,7 @@ const AdminDashboard = () => {
       .catch(() => setError('Failed to delete class.'));
   };
 
+  // Load enrolled students for a class
   const openEnroll = (clsId) => {
     setEnrollError('');
     api
@@ -126,7 +134,7 @@ const AdminDashboard = () => {
       .finally(() => setShowEnroll(true));
   };
 
-  // Group classes by date
+  // Organize classes by date for table rendering
   const grouped = classes.reduce((acc, cls) => {
     acc[cls.date] = acc[cls.date] || [];
     acc[cls.date].push(cls);
@@ -134,6 +142,7 @@ const AdminDashboard = () => {
   }, {});
 
   if (loading) {
+    // show a spinner until data arrives
     return (
       <div className="text-center my-5">
         <Spinner animation="border" />
@@ -141,6 +150,7 @@ const AdminDashboard = () => {
     );
   }
   if (error) {
+    // show top-level error if something went wrong
     return (
       <Container className="my-5">
         <Alert variant="danger">{error}</Alert>
@@ -152,6 +162,7 @@ const AdminDashboard = () => {
     <>
       <CustomBreadcrumb activeLabel="Admin Dashboard" />
 
+      {/* Header info bar */}
       <Container
         fluid
         className="bg-light text-center py-2"
@@ -179,7 +190,7 @@ const AdminDashboard = () => {
                     className="text-white text-center"
                     style={{ backgroundColor: '#343a40' }}
                   >
-                    {dayLabel(iso)}
+                    {dayLabel(iso)} {/* section header */}
                   </th>
                 </tr>
                 <tr style={{ backgroundColor: '#495057', color: '#fff' }}>
@@ -199,7 +210,7 @@ const AdminDashboard = () => {
                         {cls.start_time} ({cls.duration}m)
                       </td>
                       <td>{cls.instructor_name}</td>
-                      <td>—</td>
+                      <td>—</td> {/* placeholder until we show count */}
                       <td>
                         <Button
                           size="sm"
@@ -240,7 +251,7 @@ const AdminDashboard = () => {
         })}
       </Container>
 
-      {/* Create/Edit Modal */}
+      {/* Create/Edit Class Modal */}
       <Modal show={showForm} onHide={() => setShowForm(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>{formMode === 'create' ? 'Add Class' : 'Edit Class'}</Modal.Title>
@@ -262,6 +273,7 @@ const AdminDashboard = () => {
                 ))}
               </Form.Select>
             </Form.Group>
+            {/* Date picker */}
             <Form.Group className="mb-3">
               <Form.Label>Date</Form.Label>
               <Form.Control
@@ -271,6 +283,7 @@ const AdminDashboard = () => {
                 required
               />
             </Form.Group>
+            {/* Time input */}
             <Form.Group className="mb-3">
               <Form.Label>Start Time</Form.Label>
               <Form.Control
@@ -281,6 +294,7 @@ const AdminDashboard = () => {
                 required
               />
             </Form.Group>
+            {/* Duration input */}
             <Form.Group className="mb-3">
               <Form.Label>Duration (mins)</Form.Label>
               <Form.Control
@@ -291,6 +305,7 @@ const AdminDashboard = () => {
                 required
               />
             </Form.Group>
+            {/* Capacity input */}
             <Form.Group className="mb-3">
               <Form.Label>Capacity</Form.Label>
               <Form.Control
@@ -301,6 +316,7 @@ const AdminDashboard = () => {
                 required
               />
             </Form.Group>
+            {/* Instructor dropdown */}
             <Form.Group className="mb-3">
               <Form.Label>Instructor</Form.Label>
               <Form.Select

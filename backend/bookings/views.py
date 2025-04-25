@@ -7,7 +7,7 @@ class BookingViewSet(viewsets.ModelViewSet):
     - Any logged‐in user can create a booking (enroll).
     - Staff users see all bookings; normal users only see their own.
     """
-    queryset = Booking.objects.all()              # ← add this
+    queryset = Booking.objects.all()             
     serializer_class = BookingSerializer
     permission_classes = [permissions.IsAuthenticated]
 

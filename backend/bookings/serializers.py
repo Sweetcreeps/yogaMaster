@@ -1,5 +1,3 @@
-# backend/bookings/serializers.py
-
 from rest_framework import serializers
 from .models import Booking
 from classes.serializers import YogaClassSerializer

@@ -1,21 +1,21 @@
-# backend/classes/serializers.py
-
-from rest_framework import serializers
-from .models import YogaClass
-from users.models import User
+from rest_framework import serializers  
+from .models import YogaClass          
+from users.models import User          
 
 class YogaClassSerializer(serializers.ModelSerializer):
-    # read-only username for popup display
+    # include the instructor’s username in the serialized output
     instructor_name = serializers.CharField(
-        source='instructor.username',
-        read_only=True
+        source='instructor.username',  # pull from the related User
+        read_only=True                 # only for reading, not writing
     )
-    # writeable PK field for instructor FK
+    # allow clients to set instructor by their user ID
     instructor = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.filter(is_staff=True),
-        help_text='ID of a staff user who will teach this class'
+        queryset=User.objects.filter(is_staff=True),  # only staff can be instructors
+        help_text='ID of a staff user who will teach this class'  # for API docs
     )
+    # calculate how many spots have been booked
     spots_taken = serializers.SerializerMethodField()
+    # calculate remaining spots based on capacity
     spots_remaining = serializers.SerializerMethodField()
 
     class Meta:
@@ -27,15 +27,16 @@ class YogaClassSerializer(serializers.ModelSerializer):
             'start_time',
             'duration',
             'capacity',
-            'instructor',        # write this in POST/PUT
-            'instructor_name',   # read-only for display
-            'spots_taken',
-            'spots_remaining',
+            'instructor',        
+            'instructor_name',   
+            'spots_taken',       
+            'spots_remaining',   
         ]
 
     def get_spots_taken(self, obj):
-        # default related_name is booking_set
+        # count related bookings (default related_name: booking_set)
         return obj.booking_set.count()
 
     def get_spots_remaining(self, obj):
+        # subtract taken spots from capacity
         return obj.capacity - obj.booking_set.count()

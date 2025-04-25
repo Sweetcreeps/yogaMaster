@@ -1,5 +1,3 @@
-// src/pages/Schedule.js
-
 import React, { useState, useEffect } from 'react';
 import {
   Container,
@@ -13,6 +11,7 @@ import { format, startOfToday, addDays } from 'date-fns';
 import CustomBreadcrumb from '../components/CustomBreadcrumb';
 import api from '../api/axiosConfig';
 
+// fallback descriptions for each yoga style
 const descriptions = {
   'Vinyasa Flow':
     'A dynamic practice linking breath with movement in a continuous, energizing flow.',
@@ -32,8 +31,10 @@ const descriptions = {
     'A balanced class blending dynamic flow segments with restorative holds for equilibrium.',
 };
 
+// prepare an array of the next 14 dates
 const days = Array.from({ length: 14 }, (_, i) => addDays(startOfToday(), i));
 
+// convert ISO date to "Today"/"Tomorrow"/weekday label
 const dayLabel = (iso) => {
   const dt = new Date(iso), today = startOfToday();
   if (dt.toDateString() === today.toDateString()) return 'Today';
@@ -42,7 +43,9 @@ const dayLabel = (iso) => {
 };
 
 const Schedule = () => {
+  // holds classes grouped by date
   const [schedule, setSchedule] = useState({});
+  // track which classes current user is enrolled in
   const [enrolledIds, setEnrolledIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -50,16 +53,18 @@ const Schedule = () => {
   const [selectedClass, setSelectedClass] = useState(null);
 
   useEffect(() => {
+    // fetch both classes and current user's bookings
     Promise.all([api.get('classes/'), api.get('bookings/')])
       .then(([clsRes, bookRes]) => {
-        // group classes by date
+        // group classes by their date string
         const grouped = {};
         clsRes.data.forEach((cls) => {
           grouped[cls.date] = grouped[cls.date] || [];
           grouped[cls.date].push(cls);
         });
         setSchedule(grouped);
-        // collect the IDs of classes the user is already enrolled in
+
+        // extract class IDs from bookings
         const ids = bookRes.data.map((b) => b.yoga_class.id);
         setEnrolledIds(ids);
       })
@@ -73,11 +78,13 @@ const Schedule = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  // open modal to show class details
   const handleRowClick = (cls) => {
     setSelectedClass(cls);
     setShowModal(true);
   };
 
+  // enroll in selected class and update UI
   const handleEnroll = () => {
     api.post('bookings/', { yoga_class_id: selectedClass.id })
       .then(() => {
@@ -92,9 +99,11 @@ const Schedule = () => {
   };
 
   if (loading) {
+    // show spinner while loading
     return <div className="text-center my-5"><Spinner animation="border" /></div>;
   }
   if (error) {
+    // display fetch errors
     return (
       <Container className="my-5">
         <Alert variant="danger">{error}</Alert>
@@ -106,7 +115,7 @@ const Schedule = () => {
     <>
       <CustomBreadcrumb activeLabel="Schedule" />
 
-      {/* Location Info Banner */}
+      {/* studio address & hours banner */}
       <Container
         fluid
         className="bg-light text-center py-2"
@@ -117,7 +126,7 @@ const Schedule = () => {
         </p>
       </Container>
 
-      {/* Schedule Tables */}
+      {/* list each day's schedule */}
       <Container style={{ marginTop: '1rem', marginBottom: '2rem' }}>
         {days.map((day) => {
           const iso = format(day, 'yyyy-MM-dd');
@@ -158,6 +167,7 @@ const Schedule = () => {
                         <td style={{ color: '#343a40', fontWeight: 500 }}>
                           {cls.start_time} ({cls.duration} mins)
                         </td>
+                        {/* show remaining spots */}
                         <td>{cls.spots_remaining}</td>
                       </tr>
                     );
@@ -175,7 +185,7 @@ const Schedule = () => {
         })}
       </Container>
 
-      {/* Booking Modal */}
+      {/* details & enroll modal */}
       <Modal
         show={showModal}
         onHide={() => setShowModal(false)}

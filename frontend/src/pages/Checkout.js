@@ -1,6 +1,4 @@
-// src/pages/Checkout.js
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; // Just grabbing React and the hooks we need – useState and useEffect
 import {
   Container,
   Row,
@@ -10,32 +8,33 @@ import {
   Alert,
   Spinner,
   Card,
-} from 'react-bootstrap';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { loadStripe } from '@stripe/stripe-js';
+} from 'react-bootstrap'; // Pulling in some Bootstrap components because styling is life
+import { useSearchParams, useNavigate } from 'react-router-dom'; // For grabbing URL params and navigating after payment
+import { loadStripe } from '@stripe/stripe-js'; // Stripe.js loader
 import {
   Elements,
   CardElement,
   useStripe,
   useElements,
-} from '@stripe/react-stripe-js';
-import api from '../api/axiosConfig';
+} from '@stripe/react-stripe-js'; // React bindings for Stripe.js
+import api from '../api/axiosConfig'; // Axios setup for our backend calls
 
 // Initialize Stripe with your publishable key from .env
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_KEY);
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_KEY); // I like keeping this outside the component so it doesn’t reload on every render
 
 // Define your plans (price in pence)
 const plans = {
-  '1': { id: 1, name: 'Individual Class', price: 1000 },      // £10.00
-  '2': { id: 2, name: 'Monthly Subscription', price: 4000 },  // £40.00
+  '1': { id: 1, name: 'Individual Class', price: 1000 },      // £10.00 – simple one-off price
+  '2': { id: 2, name: 'Monthly Subscription', price: 4000 },  // £40.00 – recurring vibes (if you handle subscriptions server-side)
 };
 
 const CheckoutForm = ({ plan }) => {
-  const stripe = useStripe();
-  const elements = useElements();
-  const navigate = useNavigate();
+  const stripe = useStripe(); // Stripe instance
+  const elements = useElements(); // Elements instance
+  const navigate = useNavigate(); // Router navigation helper
 
-  const [email, setEmail] = useState('');
+  // Local state for form fields and UI feedback
+  const [email, setEmail] = useState(''); 
   const [name, setName] = useState('');
   const [remember, setRemember] = useState(false);
   const [error, setError] = useState(null);
@@ -44,10 +43,10 @@ const CheckoutForm = ({ plan }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!stripe || !elements) return;
+    if (!stripe || !elements) return; // Wait until Stripe.js has loaded
 
-    setProcessing(true);
-    setError(null);
+    setProcessing(true);  // Disable the button and show spinner
+    setError(null);       // Clear previous errors
 
     // 1. Create a PaymentMethod
     const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({
@@ -56,7 +55,7 @@ const CheckoutForm = ({ plan }) => {
       billing_details: { name, email },
     });
     if (pmError) {
-      setError(pmError.message);
+      setError(pmError.message); // Show Stripe’s card errors
       setProcessing(false);
       return;
     }
@@ -70,12 +69,12 @@ const CheckoutForm = ({ plan }) => {
         email,
         remember,
       });
-      setSucceeded(true);
-      setTimeout(() => navigate('/dashboard'), 1500);
+      setSucceeded(true); // Let the user know we’re all good
+      setTimeout(() => navigate('/dashboard'), 1500); // Give them a sec to read the success message
     } catch (err) {
-      setError(err.response?.data?.detail || 'Purchase failed.');
+      setError(err.response?.data?.detail || 'Purchase failed.'); // Handle backend errors gracefully
     } finally {
-      setProcessing(false);
+      setProcessing(false); // Always hide the spinner in the end
     }
   };
 
@@ -87,8 +86,8 @@ const CheckoutForm = ({ plan }) => {
         </Alert>
       ) : (
         <Form onSubmit={handleSubmit}>
-          <h3 className="mb-4">{plan.name}</h3>
-          <p className="lead">Amount: £{(plan.price / 100).toFixed(2)}</p>
+          <h3 className="mb-4">{plan.name}</h3> {/* Show which plan they picked */}
+          <p className="lead">Amount: £{(plan.price / 100).toFixed(2)}</p> {/* Convert pence to pounds */}
 
           <Form.Group controlId="customerName" className="mb-3">
             <Form.Label>Name on Card</Form.Label>
@@ -98,7 +97,7 @@ const CheckoutForm = ({ plan }) => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-            />
+            /> {/* Collect the cardholder’s name */}
           </Form.Group>
 
           <Form.Group controlId="customerEmail" className="mb-3">
@@ -109,7 +108,7 @@ const CheckoutForm = ({ plan }) => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-            />
+            /> {/* Collect email for receipts or follow-ups */}
           </Form.Group>
 
           <Form.Group controlId="cardElement" className="mb-4">
@@ -122,7 +121,7 @@ const CheckoutForm = ({ plan }) => {
               }}
             >
               <CardElement options={{ style: { base: { fontSize: '16px' } } }} />
-            </div>
+            </div> {/* Fancy container for the Stripe card input */}
           </Form.Group>
 
           <Form.Group controlId="rememberCard" className="mb-4">
@@ -132,10 +131,10 @@ const CheckoutForm = ({ plan }) => {
               label="Remember this card for future purchases"
               checked={remember}
               onChange={(e) => setRemember(e.target.checked)}
-            />
+            /> {/* Let them choose to save their card */}
           </Form.Group>
 
-          {error && <Alert variant="danger">{error}</Alert>}
+          {error && <Alert variant="danger">{error}</Alert>} {/* Show any errors */}
 
           <Button
             type="submit"
@@ -144,7 +143,7 @@ const CheckoutForm = ({ plan }) => {
             className="w-100"
           >
             {processing ? <Spinner animation="border" size="sm" /> : 'Pay Now'}
-          </Button>
+          </Button> {/* Submit button with spinner */}
         </Form>
       )}
     </Card>
@@ -153,14 +152,14 @@ const CheckoutForm = ({ plan }) => {
 
 const Checkout = () => {
   const [params] = useSearchParams();
-  const planId = params.get('plan') || '1';
+  const planId = params.get('plan') || '1'; // Default to plan 1 if none provided
   const plan = plans[planId];
   const [validPlan, setValidPlan] = useState(true);
 
   useEffect(() => {
     if (!plan) {
       console.error('Unknown plan:', planId);
-      setValidPlan(false);
+      setValidPlan(false); // If they tampered with the URL, let them know
     }
   }, [planId, plan]);
 
@@ -169,18 +168,18 @@ const Checkout = () => {
       <Container className="text-center my-5">
         <Alert variant="danger">Invalid plan selected.</Alert>
       </Container>
-    );
+    ); // Friendly error for invalid plan
   }
 
   return (
     <Container
       className="d-flex justify-content-center align-items-center"
       style={{ minHeight: '80vh', marginTop: '80px' }}
-    >
+    > {/* Center the form nicely */}
       <Row className="w-100" style={{ maxWidth: '500px' }}>
         <Col>
           <Elements stripe={stripePromise}>
-            <CheckoutForm plan={plan} />
+            <CheckoutForm plan={plan} /> {/* Wrap form in Stripe Elements */}
           </Elements>
         </Col>
       </Row>
@@ -188,4 +187,4 @@ const Checkout = () => {
   );
 };
 
-export default Checkout;
+export default Checkout; // And that’s our Checkout component – nice and modular!

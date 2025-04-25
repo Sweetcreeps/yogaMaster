@@ -1,37 +1,37 @@
-# backend/yogamaster/urls.py
+from django.contrib import admin  # Django admin site
+from django.urls import path, include  # URL routing helpers
+from rest_framework import routers  # DRF routers for ViewSets
+from rest_framework.authtoken.views import obtain_auth_token  # token auth endpoint
 
-from django.contrib import admin 
-from django.urls import path, include
-from rest_framework import routers
-from rest_framework.authtoken.views import obtain_auth_token
-
+# import our ViewSets and custom endpoints
 from users.views import UserViewSet, InstructorViewSet, current_user
 from classes.views import YogaClassViewSet
 from bookings.views import BookingViewSet
 from announcements.views import AnnouncementViewSet
-from payments.views import PackageViewSet, PurchaseViewSet, CheckoutAPIView 
+from payments.views import PackageViewSet, PurchaseViewSet, CheckoutAPIView
 
+# set up a DRF router to automatically generate CRUD routes
 router = routers.DefaultRouter()
-router.register(r'users', UserViewSet)
-router.register(r'instructors', InstructorViewSet, basename='instructor')
-router.register(r'classes', YogaClassViewSet)
-router.register(r'bookings', BookingViewSet)
-router.register(r'announcements', AnnouncementViewSet)
-router.register(r'packages', PackageViewSet)
-router.register(r'purchases', PurchaseViewSet)
+router.register(r'users', UserViewSet)  # /api/users/
+router.register(r'instructors', InstructorViewSet, basename='instructor')  # /api/instructors/
+router.register(r'classes', YogaClassViewSet)  # /api/classes/
+router.register(r'bookings', BookingViewSet)  # /api/bookings/
+router.register(r'announcements', AnnouncementViewSet)  # /api/announcements/
+router.register(r'packages', PackageViewSet)  # /api/packages/
+router.register(r'purchases', PurchaseViewSet)  # /api/purchases/
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('admin/', admin.site.urls),  # Django admin
 
-    # who am I endpoint
+    # Who am I – returns the current authenticated user’s details
     path('api/auth/user/', current_user, name='current_user'),
 
-    # Checkout endpoint must come before the router include
+    # Checkout endpoint (must be before router to avoid URL conflicts)
     path('api/checkout/', CheckoutAPIView.as_view(), name='checkout'),
 
-    # Router‐registered viewsets under /api/
+    # Include all router-generated routes under /api/
     path('api/', include(router.urls)),
 
-    # JSON login endpoint
+    # Token-based auth endpoint for JSON login
     path('api/token-auth/', obtain_auth_token, name='api_token_auth'),
 ]

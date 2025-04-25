@@ -1,6 +1,4 @@
-// src/pages/Announcements.js
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; // pulling in hooks for state and lifecycle
 import {
   Container,
   Card,
@@ -10,22 +8,23 @@ import {
   Form,
   Spinner,
   Alert,
-} from 'react-bootstrap';
-import CustomBreadcrumb from '../components/CustomBreadcrumb';
-import { useAuth } from '../context/AuthContext';
-import api from '../api/axiosConfig';
+} from 'react-bootstrap'; // Bootstrap components for layout and UI
+import CustomBreadcrumb from '../components/CustomBreadcrumb'; // breadcrumb nav
+import { useAuth } from '../context/AuthContext'; // auth context to check staff status
+import api from '../api/axiosConfig'; // axios instance for API calls
 
 export default function Announcements() {
-  const { user } = useAuth();
-  const [announcements, setAnnouncements] = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [error, setError]           = useState('');
-  
+  const { user } = useAuth(); // current user info
+  const [announcements, setAnnouncements] = useState([]); // store fetched announcements
+  const [loading, setLoading]       = useState(true);   // loading indicator
+  const [error, setError]           = useState('');     // error messages
+
   // “New Announcement” modal state
   const [showModal, setShowModal]   = useState(false);
   const [formData, setFormData]     = useState({ title: '', content: '' });
-  const [saving, setSaving]         = useState(false);
+  const [saving, setSaving]         = useState(false); // saving indicator
 
+  // load announcements on mount
   useEffect(() => {
     api.get('announcements/')
       .then(res => setAnnouncements(res.data))
@@ -33,23 +32,26 @@ export default function Announcements() {
       .finally(() => setLoading(false));
   }, []);
 
+  // handle creating a new announcement
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
       const res = await api.post('announcements/', formData);
+      // prepend new announcement so it appears at top
       setAnnouncements([res.data, ...announcements]);
-      setShowModal(false);
-      setFormData({ title: '', content: '' });
+      setShowModal(false); // hide modal on success
+      setFormData({ title: '', content: '' }); // reset form
     } catch (err) {
       console.error('Announcement save error:', err.response?.data);
-      alert(`Save failed: ${JSON.stringify(err.response?.data)}`);
+      alert(`Save failed: ${JSON.stringify(err.response?.data)}`); // quick feedback
     } finally {
       setSaving(false);
     }
   };
 
   if (loading) {
+    // show spinner while fetching
     return <div className="text-center my-5"><Spinner animation="border" /></div>;
   }
 
@@ -60,6 +62,7 @@ export default function Announcements() {
       <Container style={{ marginTop: '80px', marginBottom: '2rem' }}>
         {error && <Alert variant="danger">{error}</Alert>}
 
+        {/* only staff can post new announcements */}
         {user?.is_staff && (
           <div className="mb-4 text-end">
             <Button onClick={() => setShowModal(true)}>New Announcement</Button>
@@ -67,7 +70,7 @@ export default function Announcements() {
         )}
 
         {announcements.length === 0 ? (
-          <Alert variant="info">No announcements yet.</Alert>
+          <Alert variant="info">No announcements yet.</Alert> // friendly empty state
         ) : (
           <ListGroup>
             {announcements.map((a) => (
@@ -99,7 +102,7 @@ export default function Announcements() {
               <Form.Control
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                required
+                required // ensure title isn’t empty
               />
             </Form.Group>
             <Form.Group>
@@ -109,7 +112,7 @@ export default function Announcements() {
                 rows={4}
                 value={formData.content}
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                required
+                required // ensure content isn’t empty
               />
             </Form.Group>
           </Modal.Body>
@@ -122,7 +125,7 @@ export default function Announcements() {
               Cancel
             </Button>
             <Button variant="primary" type="submit" disabled={saving}>
-              {saving ? 'Publishing…' : 'Publish'}
+              {saving ? 'Publishing…' : 'Publish'} {/* feedback on save */}
             </Button>
           </Modal.Footer>
         </Form>

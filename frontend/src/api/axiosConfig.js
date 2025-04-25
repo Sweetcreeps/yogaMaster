@@ -1,11 +1,11 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api/',
+  baseURL: '/api/',// all requests go to /api/ by default
   headers: { 'Content-Type': 'application/json' },
 });
 
-// read token from localStorage, if set
+
 const token = localStorage.getItem('token');
 if (token) {
   api.defaults.headers.Authorization = `Token ${token}`;

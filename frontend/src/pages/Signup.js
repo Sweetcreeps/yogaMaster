@@ -14,6 +14,7 @@ import CustomBreadcrumb from '../components/CustomBreadcrumb';
 
 const Signup = () => {
   const navigate = useNavigate();
+  // form holds our input values; errors tracks validation feedback
   const [form, setForm] = useState({
     username: '',
     email: '',
@@ -24,12 +25,14 @@ const Signup = () => {
   const [serverError, setServerError] = useState('');
   const [success, setSuccess] = useState(false);
 
+  // update form field and clear any existing error for that field
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: value }));
     setErrors((errs) => ({ ...errs, [name]: '' }));
   };
 
+  // basic client-side checks before hitting the API
   const validate = () => {
     const errs = {};
     if (!form.username.trim()) errs.username = 'Username is required';
@@ -42,6 +45,7 @@ const Signup = () => {
     return errs;
   };
 
+  // attempt to create account, show errors or redirect on success
   const handleSubmit = async (e) => {
     e.preventDefault();
     setServerError('');
@@ -57,10 +61,11 @@ const Signup = () => {
         password: form.password,
       });
       setSuccess(true);
-      // redirect to login after a moment
+      // give user a moment to see the success message
       setTimeout(() => navigate('/login'), 1500);
     } catch (err) {
       console.error(err);
+      // show username-related API errors or a generic message
       setServerError(
         err.response?.data?.username
           ? err.response.data.username.join(' ')
@@ -69,11 +74,12 @@ const Signup = () => {
     }
   };
 
+  // after successful signup, show a confirmation before redirect
   if (success) {
     return (
       <Container className="text-center my-5">
         <Alert variant="success">
-          Account created! Redirecting to&nbsp;
+          Account created! Redirecting to{' '}
           <Link to="/login">Sign In</Link>…
         </Alert>
       </Container>
@@ -156,6 +162,7 @@ const Signup = () => {
                   </Button>
                 </Form>
 
+                {/* link back to login for existing users */}
                 <div className="text-center mt-3">
                   Already have an account?{' '}
                   <Link to="/login" className="text-primary">

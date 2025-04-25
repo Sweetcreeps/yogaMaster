@@ -1,21 +1,20 @@
-// src/context/AuthContext.js
+import React, { createContext, useContext, useState, useEffect } from 'react'; // React core and hooks
+import api from '../api/axiosConfig'; // Axios instance with base config
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../api/axiosConfig';
-
-const AuthContext = createContext();
+const AuthContext = createContext(); // create context for auth state
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null); // store current user or null
 
-  // On mount, if there's a token, fetch current user
+  // On mount, if there's a token saved, try to fetch the user
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      api.defaults.headers.Authorization = `Token ${token}`;
+      api.defaults.headers.Authorization = `Token ${token}`; // attach token to future requests
       api.get('auth/user/')
-        .then(res => setUser(res.data))
+        .then(res => setUser(res.data)) // set user on success
         .catch(() => {
+          // if token invalid, remove it
           localStorage.removeItem('token');
           delete api.defaults.headers.Authorization;
         });
@@ -23,29 +22,29 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async ({ username, password, role, remember }) => {
-    // get token
+    // authenticate and store token
     const res = await api.post('token-auth/', { username, password });
     const token = res.data.token;
     localStorage.setItem('token', token);
     api.defaults.headers.Authorization = `Token ${token}`;
 
-    // fetch current user
+    // fetch the authenticated user's info
     const me = await api.get('auth/user/');
     const meData = me.data;
 
-    // if they tried admin but aren't staff, block
+    // block non-staff from admin area
     if (role === 'admin' && !meData.is_staff) {
-      // rollback
+      // rollback on failure
       localStorage.removeItem('token');
       delete api.defaults.headers.Authorization;
       throw new Error('Invalid admin credentials');
     }
 
-    setUser(meData);
+    setUser(meData); // update state with user data
   };
 
   const logout = () => {
-    // clear token & user
+    // clear token and reset user
     localStorage.removeItem('token');
     delete api.defaults.headers.Authorization;
     setUser(null);
@@ -53,9 +52,9 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>
-      {children}
+      {children} {/* render app */}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => useContext(AuthContext); // custom hook for consuming auth context

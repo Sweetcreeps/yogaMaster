@@ -6,23 +6,24 @@ import {
   Form,
   Button,
   Alert,
-  Breadcrumb,
 } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
 import { FaMapMarkerAlt, FaPhoneAlt, FaEnvelope, FaClock } from 'react-icons/fa';
 import CustomBreadcrumb from '../components/CustomBreadcrumb';
 
-
 const Contact = () => {
+  // form state for user inputs
   const [form, setForm] = useState({
     name: '',
     email: '',
     subject: '',
     message: '',
   });
+  // validation errors per field
   const [errors, setErrors] = useState({});
+  // flag to show success alert after submission
   const [submitted, setSubmitted] = useState(false);
 
+  // simple front-end validation logic
   const validate = () => {
     const errs = {};
     if (!form.name.trim()) errs.name = 'Name is required';
@@ -33,11 +34,13 @@ const Contact = () => {
     return errs;
   };
 
+  // update form state on input change
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: value }));
   };
 
+  // handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
     const validation = validate();
@@ -45,25 +48,24 @@ const Contact = () => {
     if (Object.keys(validation).length === 0) {
       console.log('Sending message:', form);
       setSubmitted(true);
+      // clear form inputs
       setForm({ name: '', email: '', subject: '', message: '' });
     }
   };
 
   return (
     <>
-     
-     <CustomBreadcrumb activeLabel="Contact" />
-    
+      {/* breadcrumb navigation */}
+      <CustomBreadcrumb activeLabel="Contact" />
 
-      {/* Page Header */}
+      {/* page title */}
       <Container style={{ marginBottom: '2rem' }}>
         <h1 className="my-4">Get in Touch</h1>
       </Container>
 
-       {/* Main Content */}
-       <Container style={{ marginBottom: '4rem' }}>
+      <Container style={{ marginBottom: '4rem' }}>
         <Row>
-          {/* Left: Contact Info */}
+          {/* left column: static contact details */}
           <Col md={4} className="mb-4">
             <h5 className="fw-bold mb-3">Contact Details</h5>
             <div className="contact-info">
@@ -99,8 +101,9 @@ const Contact = () => {
             </div>
           </Col>
 
-          {/* Right: Contact Form */}
+          {/* right column: user message form */}
           <Col md={8}>
+            {/* show after successful submit */}
             {submitted && (
               <Alert variant="success" onClose={() => setSubmitted(false)} dismissible>
                 Thank you! Your message has been sent.
@@ -168,6 +171,7 @@ const Contact = () => {
                 </Form.Control.Feedback>
               </Form.Group>
 
+              {/* submit button */}
               <Button variant="primary" type="submit">
                 Send Message
               </Button>
@@ -175,8 +179,6 @@ const Contact = () => {
           </Col>
         </Row>
       </Container>
-
-      
     </>
   );
 };

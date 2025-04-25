@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import YogaClass
 
-@admin.register(YogaClass)
+@admin.register(YogaClass)# register YogaClass with the admin
 class YogaClassAdmin(admin.ModelAdmin):
     list_display    = ('title', 'date', 'start_time', 'instructor', 'capacity')
     list_filter     = ('date', 'title')

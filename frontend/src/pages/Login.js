@@ -1,5 +1,3 @@
-// src/pages/Login.js
-
 import React, { useState } from 'react';
 import {
   Container,
@@ -18,17 +16,20 @@ import LogoSmall from '../images/LogoSmallBlk.png';
 import CustomBreadcrumb from '../components/CustomBreadcrumb';
 
 const Login = () => {
-  const navigate = useNavigate();
-  const { login } = useAuth();
+  const navigate = useNavigate(); // to programmatically redirect after login
+  const { login } = useAuth();    // custom hook for authentication logic
 
+  // track whether we're on the 'user' or 'admin' tab
   const [key, setKey] = useState('user');
+  // form state holds entered username, password and 'remember me'
   const [form, setForm] = useState({
     username: '',
     password: '',
     remember: false,
   });
-  const [errors, setErrors] = useState('');
+  const [errors, setErrors] = useState(''); // show credential errors
 
+  // generic handler for all form inputs
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm((f) => ({
@@ -37,9 +38,10 @@ const Login = () => {
     }));
   };
 
+  // submit handler: tries to log in and then redirect
   const handleSubmit = async (e, isAdmin = false) => {
     e.preventDefault();
-    setErrors('');
+    setErrors(''); // clear previous errors
     try {
       await login({
         username: form.username,
@@ -47,14 +49,15 @@ const Login = () => {
         role: isAdmin ? 'admin' : 'user',
         remember: form.remember,
       });
+      // redirect based on user type
       navigate(isAdmin ? '/admin' : '/dashboard', { replace: true });
     } catch {
-      setErrors('Invalid credentials');
+      setErrors('Invalid credentials'); // simple error message
     }
   };
 
+  // placeholder for Google OAuth flow
   const handleGoogleSignIn = () => {
-    // replace with real OAuth flow when available
     window.location.href = '/api/auth/google/';
   };
 
@@ -78,16 +81,18 @@ const Login = () => {
           <Col>
             <Card>
               <Card.Body>
+                {/* show error alert if login fails */}
                 {errors && <Alert variant="danger">{errors}</Alert>}
                 <Tabs
                   id="login-tabs"
                   activeKey={key}
                   onSelect={(k) => {
                     setKey(k);
-                    setErrors('');
+                    setErrors(''); // clear errors when switching tabs
                   }}
                   className="mb-3"
                 >
+                  {/* USER LOGIN TAB */}
                   <Tab eventKey="user" title="User">
                     <Form onSubmit={(e) => handleSubmit(e, false)}>
                       <Form.Group className="mb-3">
@@ -139,6 +144,7 @@ const Login = () => {
                       </div>
                     </Form>
                   </Tab>
+                  {/* ADMIN LOGIN TAB */}
                   <Tab eventKey="admin" title="Admin">
                     <Form onSubmit={(e) => handleSubmit(e, true)}>
                       <Form.Group className="mb-3">

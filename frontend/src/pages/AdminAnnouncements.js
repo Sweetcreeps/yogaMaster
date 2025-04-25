@@ -1,17 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'; // React core and state hook
 import {
   Container,
   Table,
   Button,
   Modal,
   Form,
-} from 'react-bootstrap';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import CustomBreadcrumb from '../components/CustomBreadcrumb';
-import { format, startOfToday } from 'date-fns';
+} from 'react-bootstrap'; // Bootstrap components for layout & modals
+import CustomBreadcrumb from '../components/CustomBreadcrumb'; // Breadcrumb nav
+import { format, startOfToday } from 'date-fns'; // date-fns for formatting dates
 
-// initial mock announcements (same as public)
+// Initial mock data for announcements (public view)
 const initialAnnouncements = [
   {
     id: 1,
@@ -23,35 +21,41 @@ const initialAnnouncements = [
     id: 2,
     title: 'New Evening Flow Class',
     date: '2025-04-25',
-    content: 'Join our brand‑new “Flow & Restore” class every Thursday at 7pm—perfect for decompressing after a busy day.',
+    content: 'Join our brand-new “Flow & Restore” class every Thursday at 7pm—perfect for decompressing after a busy day.',
   },
 ];
 
 const AdminAnnouncements = () => {
+  // State for announcements list
   const [announcements, setAnnouncements] = useState(initialAnnouncements);
+  // Modal visibility state
   const [showModal, setShowModal] = useState(false);
+  // Current announcement being created or edited
   const [current, setCurrent] = useState({ id: null, title: '', content: '' });
 
+  // Open modal for new or existing announcement
   const openModal = (anno = null) => {
     if (anno) {
-      setCurrent(anno);
+      setCurrent(anno); // populate form for editing
     } else {
       setCurrent({
         id: null,
         title: '',
-        date: format(startOfToday(), 'yyyy-MM-dd'),
+        date: format(startOfToday(), 'yyyy-MM-dd'), // default date = today
         content: '',
       });
     }
     setShowModal(true);
   };
 
+  // Close the modal without saving
   const closeModal = () => setShowModal(false);
 
+  // Handle create or update on form submission
   const handleSave = (e) => {
     e.preventDefault();
     if (current.id == null) {
-      // create
+      // Create new announcement
       const newId = announcements.length
         ? Math.max(...announcements.map((a) => a.id)) + 1
         : 1;
@@ -60,16 +64,17 @@ const AdminAnnouncements = () => {
         { ...current, id: newId, date: format(startOfToday(), 'yyyy-MM-dd') },
       ]);
     } else {
-      // edit
+      // Edit existing announcement
       setAnnouncements(
         announcements.map((a) =>
           a.id === current.id ? { ...current } : a
         )
       );
     }
-    closeModal();
+    closeModal(); // hide modal after save
   };
 
+  // Remove an announcement after confirmation
   const handleDelete = (id) => {
     if (window.confirm('Delete this announcement?')) {
       setAnnouncements((prev) => prev.filter((a) => a.id !== id));
@@ -78,7 +83,6 @@ const AdminAnnouncements = () => {
 
   return (
     <>
-      
       <CustomBreadcrumb activeLabel="Manage Announcements" />
 
       <Container style={{ marginTop: '1rem', marginBottom: '2rem' }}>
@@ -105,14 +109,14 @@ const AdminAnnouncements = () => {
                     size="sm"
                     variant="outline-secondary"
                     className="me-2"
-                    onClick={() => openModal(a)}
+                    onClick={() => openModal(a)} // edit this one
                   >
                     Edit
                   </Button>
                   <Button
                     size="sm"
                     variant="outline-danger"
-                    onClick={() => handleDelete(a.id)}
+                    onClick={() => handleDelete(a.id)} // delete this one
                   >
                     Delete
                   </Button>
@@ -123,7 +127,7 @@ const AdminAnnouncements = () => {
         </Table>
       </Container>
 
-      {/* Create / Edit Modal */}
+      {/* Modal for creating or editing an announcement */}
       <Modal show={showModal} onHide={closeModal} centered>
         <Modal.Header closeButton>
           <Modal.Title>
@@ -161,8 +165,6 @@ const AdminAnnouncements = () => {
           </Form>
         </Modal.Body>
       </Modal>
-
-      
     </>
   );
 };

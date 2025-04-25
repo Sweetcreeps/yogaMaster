@@ -1,5 +1,3 @@
-# backend/classes/views.py
-
 from rest_framework import viewsets, permissions
 from .models import YogaClass
 from .serializers import YogaClassSerializer
