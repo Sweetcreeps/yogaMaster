@@ -76,9 +76,26 @@ source .venv/bin/activate       # Linux/macOS
 .venv\Scripts\activate          # Windows
 pip install -r requirements.txt
 
-# Create and apply migrations
-export DJANGO_SETTINGS_MODULE=yogamaster.settings
-python manage.py migrate
+# Or download all libraries manually
+pip install asgiref==3.8.1
+pip install cachetools==5.5.2
+pip install certifi==2025.1.31
+pip install charset-normalizer==3.4.1
+pip install Django==5.2
+pip install django-cors-headers==4.7.0
+pip install djangorestframework==3.16.0
+pip install google-auth==2.39.0
+pip install idna==3.10
+pip install pyasn1==0.6.1
+pip install pyasn1_modules==0.4.2
+pip install requests==2.32.3
+pip install rsa==4.9.1
+pip install sqlparse==0.5.3
+pip install stripe==12.0.1
+pip install typing_extensions==4.13.2
+pip install tzdata==2025.2
+pip install urllib3==2.4.0
+
 
 # Create superuser
 python manage.py createsuperuser
